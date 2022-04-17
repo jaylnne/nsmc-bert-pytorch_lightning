@@ -1,0 +1,1 @@
+# Naver sentiment movie corpus(NSMC) BERT Pytorch Lightning
