@@ -63,6 +63,21 @@ class NSMCClassification(pl.LightningModule):
         avg_val_acc = torch.stack([x['val_acc'] for x in outputs]).mean()
         
         tensorboard_logs = {'val_loss': avg_loss, 'avg_val_acc':avg_val_acc}
-        return {'avg_val_loss': avg_logg, 'progress_bar': tensorboard_logs}
+        return {'avg_val_loss': avg_loss, 'progress_bar': tensorboard_logs}
     
+    def test_step(self, batch, batch_nb):
+        input_ids, attention_mask, token_type_ids, label = batch
+        
+        y_hat, attn = self.forward(input_ids, attention_mask, token_type_ids)
+        
+        a, y_hat = torch.max(y_hat, dim=1)
+        test_acc = accuracy_score(y_hat.cpu(), label.cpu())
+        test_acc = torch.tensor(test_acc)
+        
+        return {'test_acc': test_acc}
     
+    def test_end(self, outputs):
+        avg_test_acc = torch.stack([x['test_acc'] for x in outputs]).mean()
+        
+        tensorboard_logs = {'avg_test_acc': avg_test_acc}
+        return {'avg_test_acc': tensorboard_logs}
