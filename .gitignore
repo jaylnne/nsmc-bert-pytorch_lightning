@@ -1,5 +1,6 @@
-# pytorch lightning logs
+# Custom
 lightning_logs/
+pretrained/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
