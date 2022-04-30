@@ -1,9 +1,16 @@
+import wget
 import torch
-## TODO randomness 제어하기 -> torch, CuDNN etc
+import warnings
+warnings.filterwarnings('ignore')
+import pandas as pd
 import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from transformers import BertModel
+from kobert_tokenizer import KoBERTTokenizer
+from torch.utils.data import random_split, Dataset, DataLoader
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+
 
 class NSMCClassification(pl.LightningModule):
     
@@ -11,7 +18,7 @@ class NSMCClassification(pl.LightningModule):
         super(NSMCClassification, self).__init__()
         
         # load pretrained koBERT
-        self.bert = BertModel.from_pretrained('skt/kobert-base-v1', output_attentions=True)
+        self.bert = BertModel.from_pretrained('pretrained', output_attentions=True)
         
         # simple linear layer (긍/부정, 2 classes)
         self.W = nn.Linear(self.bert.config.hidden_size, 2)
@@ -19,24 +26,30 @@ class NSMCClassification(pl.LightningModule):
         
     def forward(self, input_ids, attention_mask, token_type_ids):
         
-        h, _, attn = self.bert(input_ids=input_id,
-                               attention_mask=attention_mask,
-                               token_type_ids=token_type_ids,
-                              )
-        h_cls = h[:, 0]
+        out = self.bert(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+        )
+        
+        h_cls = out['last_hidden_state'][:, -1]
         logits = self.W(h_cls)
+        attn = out['attentions']
         
         return logits, attn
     
     def training_step(self, batch, batch_nb):
         # batch
-        input_ids, attention_mask, token_type_ids, label = batch
+        input_ids = batch['input_ids']
+        attention_mask = batch['attention_mask']
+        token_type_ids = batch['token_type_ids']
+        label = batch['label']
         
         # forward
         y_hat, attn = self.forward(input_ids, attention_mask, token_type_ids)
         
         # BCE loss
-        loss = F.binary_cross_entropy_with_logits(y_hat, label)
+        loss = F.cross_entropy(y_hat, label.long())
         
         # logs
         tensorboard_logs = {'train_loss': loss}
@@ -45,13 +58,16 @@ class NSMCClassification(pl.LightningModule):
     
     def validation_step(self, batch, batch_nb):
         # batch
-        input_ids, attention_mask, token_type_ids, label = batch
+        input_ids = batch['input_ids']
+        attention_mask = batch['attention_mask']
+        token_type_ids = batch['token_type_ids']
+        label = batch['label']
         
         # forward
         y_hat, attn = self.forward(input_ids, attention_mask, token_type_ids)
         
         # loss
-        loss = F.binary_cross_entropy_with_logits(y_hat, label)
+        loss = F.cross_entropy(y_hat, label.long())
         
         # accuracy
         a, y_hat = torch.max(y_hat, dim=1)
@@ -68,7 +84,10 @@ class NSMCClassification(pl.LightningModule):
         return {'avg_val_loss': avg_loss, 'progress_bar': tensorboard_logs}
     
     def test_step(self, batch, batch_nb):
-        input_ids, attention_mask, token_type_ids, label = batch
+        input_ids = batch['input_ids']
+        attention_mask = batch['attention_mask']
+        token_type_ids = batch['token_type_ids']
+        label = batch['label']
         
         y_hat, attn = self.forward(input_ids, attention_mask, token_type_ids)
         
@@ -84,7 +103,7 @@ class NSMCClassification(pl.LightningModule):
         tensorboard_logs = {'avg_test_acc': avg_test_acc}
         return {'avg_test_acc': tensorboard_logs}
     
-    def configure_optimizer(self):
+    def configure_optimizers(self):
         parameters = []
         for p in self.parameters():
             if p.requires_grad:
@@ -95,3 +114,72 @@ class NSMCClassification(pl.LightningModule):
         optimizer = torch.optim.Adam(parameters, lr=2e-05, eps=1e-08)
         
         return optimizer
+
+
+class NSMCDataset(Dataset):
+    
+    def __init__(self, file_path, max_seq_len):
+        self.data = pd.read_csv(file_path)
+        self.max_seq_len = max_seq_len
+        self.tokenizer = KoBERTTokenizer.from_pretrained('pretrained')
+    
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, index):
+        data = self.data.iloc[index]
+        
+        doc = data['document']
+        features = self.tokenizer.encode_plus(str(doc),
+                                              add_special_tokens=True,
+                                              max_length=self.max_seq_len,
+                                              pad_to_max_length='longest',
+                                              truncation=True,
+                                              return_attention_mask=True,
+                                              return_tensors='pt',
+                                             )        
+        input_ids = features['input_ids'].squeeze(0)
+        attention_mask = features['attention_mask'].squeeze(0)
+        token_type_ids = features['token_type_ids'].squeeze(0)
+        label = torch.tensor(data['label'])
+        # label = F.one_hot(label)
+                        
+        return {
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'token_type_ids': token_type_ids,
+            'label': label
+        }
+    
+    
+class NSMCDataModule(pl.LightningDataModule):
+    
+    def __init__(self, data_dir, stem_analyzer, valid_size, max_seq_len, batch_size):
+        self.full_data_path = f'{data_dir}/train_{stem_analyzer}.csv'
+        self.test_data_path = f'{data_dir}/test_{stem_analyzer}.csv'
+        self.valid_size = valid_size
+        self.max_seq_len = max_seq_len
+        self.batch_size = batch_size
+        
+    # def prepare_data(self):
+    #     # download data
+    #     wget.download('https://github.com/e9t/nsmc/blob/master/ratings_train.txt', out='data')
+    #     wget.download('https://github.com/e9t/nsmc/blob/master/ratings_test.txt', out='data')
+        
+    def setup(self, stage):
+        full = NSMCDataset(self.full_data_path, self.max_seq_len)
+        train_size = int(len(full) * (1 - self.valid_size))
+        valid_size = len(full) - train_size
+        self.train, self.valid = random_split(full, [train_size, valid_size])
+        self.test = NSMCDataset(self.test_data_path, self.max_seq_len)
+        
+    def train_dataloader(self):
+        return DataLoader(self.train, batch_size=self.batch_size, num_workers=5, shuffle=True, pin_memory=True)
+    
+    def val_dataloader(self):
+        return DataLoader(self.valid, batch_size=self.batch_size, num_workers=5, shuffle=False, pin_memory=True)
+    
+    def test_dataloader(self):
+        return DataLoader(self.test, batch_size=self.batch_size, num_workers=5, shuffle=False, pin_memory=True)
+    
+    ## TODO predict_dataloader 추가
