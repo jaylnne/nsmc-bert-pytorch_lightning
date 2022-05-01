@@ -73,6 +73,7 @@ class NSMCClassification(pl.LightningModule):
         a, y_hat = torch.max(y_hat, dim=1)
         val_acc = accuracy_score(y_hat.cpu(), label.cpu())
         val_acc = torch.tensor(val_acc)
+        self.log('val_acc', val_acc)
         
         return {'val_loss': loss, 'val_acc': val_acc}
     
