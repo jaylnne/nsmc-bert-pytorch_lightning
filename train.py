@@ -32,7 +32,7 @@ checkpoint_callback = ModelCheckpoint(
     verbose=True,
     save_last=False,
     mode='max',
-    save_top_k=-1,
+    save_top_k=1,
 )
 early_stopping = EarlyStopping(
     monitor='val_acc', 
@@ -46,6 +46,5 @@ trainer = Trainer(
     devices=AVAIL_GPUS,
     auto_select_gpus=False,
     callbacks=[checkpoint_callback, early_stopping],
-    deterministic=True,
 )
 trainer.fit(model, dm)
