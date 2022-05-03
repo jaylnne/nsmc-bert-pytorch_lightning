@@ -9,10 +9,11 @@ seed_everything(42)
 
 EPOCH = 10
 AVAIL_GPUS = min(1, torch.cuda.device_count())
+STEM_ANALYZER = 'mecab'
 
 dm = NSMCDataModule(
     data_dir='./data', 
-    stem_analyzer='mecab', 
+    stem_analyzer=STEM_ANALYZER, 
     valid_size=0.1, 
     max_seq_len=64, 
     batch_size=32,
