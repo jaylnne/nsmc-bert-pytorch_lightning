@@ -1,5 +1,4 @@
 import torch
-from datetime import date
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -12,14 +11,17 @@ seed_everything(42, workers=True)
 EPOCH = 10
 AVAIL_GPUS = -1
 STEM_ANALYZER = 'mecab'
-CKPT_PATH = 'checkpoints'
+CKPT_SAVE_PATH = 'checkpoints'
+VALID_SIZE = 0.1
+MAX_SEQ_LEN = 64
+BATCH_SIZE = 32
 
 dm = NSMCDataModule(
     data_dir='./data', 
     stem_analyzer=STEM_ANALYZER, 
-    valid_size=0.1, 
-    max_seq_len=64, 
-    batch_size=32,
+    valid_size=VALID_SIZE, 
+    max_seq_len=MAX_SEQ_LEN, 
+    batch_size=BATCH_SIZE,
 )
 dm.setup('fit')
 
@@ -27,7 +29,7 @@ model = NSMCClassification()
 
 checkpoint_callback = ModelCheckpoint(
     monitor='val_acc',
-    dirpath=CKPT_PATH,
+    dirpath=CKPT_SAVE_PATH,
     filename='{epoch:02d}-{val_acc:.3f}',
     verbose=True,
     save_last=False,
@@ -44,7 +46,9 @@ trainer = Trainer(
     accelerator='gpu',
     strategy="ddp",
     devices=AVAIL_GPUS,
-    auto_select_gpus=False,
+    auto_select_gpus=True,
     callbacks=[checkpoint_callback, early_stopping],
 )
 trainer.fit(model, dm)
+
+trainer.test(ckpt_path='best')
