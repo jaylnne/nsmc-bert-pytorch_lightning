@@ -109,8 +109,6 @@ class NSMCClassification(pl.LightningModule):
         for p in self.parameters():
             if p.requires_grad:
                 parameters.append(p)
-            else:
-                print(p)
                 
         optimizer = torch.optim.Adam(parameters, lr=2e-05, eps=1e-08)
         
