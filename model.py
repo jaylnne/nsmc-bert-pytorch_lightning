@@ -73,7 +73,7 @@ class NSMCClassification(pl.LightningModule):
         a, y_hat = torch.max(y_hat, dim=1)
         val_acc = accuracy_score(y_hat.cpu(), label.cpu())
         val_acc = torch.tensor(val_acc)
-        self.log('val_acc', val_acc)
+        self.log('val_acc', val_acc, prog_bar=True)
         
         return {'val_loss': loss, 'val_acc': val_acc}
     
@@ -96,12 +96,15 @@ class NSMCClassification(pl.LightningModule):
         test_acc = accuracy_score(y_hat.cpu(), label.cpu())
         test_acc = torch.tensor(test_acc)
         
+        self.log_dict({'test_acc': test_acc})
+        
         return {'test_acc': test_acc}
     
     def test_end(self, outputs):
         avg_test_acc = torch.stack([x['test_acc'] for x in outputs]).mean()
         
         tensorboard_logs = {'avg_test_acc': avg_test_acc}
+        
         return {'avg_test_acc': tensorboard_logs}
     
     def configure_optimizers(self):
