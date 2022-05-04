@@ -163,10 +163,10 @@ class NSMCDataModule(pl.LightningDataModule):
         self.max_seq_len = max_seq_len
         self.batch_size = batch_size
         
-    # def prepare_data(self):
-    #     # download data
-    #     wget.download('https://github.com/e9t/nsmc/blob/master/ratings_train.txt', out='data')
-    #     wget.download('https://github.com/e9t/nsmc/blob/master/ratings_test.txt', out='data')
+    def prepare_data(self, data_path):
+        # download data
+        wget.download('https://github.com/e9t/nsmc/raw/master/ratings_train.txt', out='data')
+        wget.download('https://github.com/e9t/nsmc/raw/master/ratings_test.txt', out='data')
         
     def setup(self, stage):
         full = NSMCDataset(self.full_data_path, self.max_seq_len)

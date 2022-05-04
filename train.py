@@ -4,13 +4,16 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 from model import *
+from preprocessing import generate_preprocessed
 
 
 seed_everything(42, workers=True)
 
+DATA_PATH = 'data'
+
 EPOCH = 10
 AVAIL_GPUS = -1
-STEM_ANALYZER = 'mecab'
+STEM_ANALYZER = 'clean'
 CKPT_SAVE_PATH = 'checkpoints'
 VALID_SIZE = 0.1
 MAX_SEQ_LEN = 64
@@ -23,6 +26,8 @@ dm = NSMCDataModule(
     max_seq_len=MAX_SEQ_LEN, 
     batch_size=BATCH_SIZE,
 )
+dm.prepare_data(DATA_PATH)
+generate_preprocessed(DATA_PATH)
 dm.setup('fit')
 
 model = NSMCClassification()
