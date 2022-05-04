@@ -19,7 +19,7 @@ def main():
                         help='where to prepare data')
     parser.add_argument('--max_epoch',
                        type=int,
-                        default=1,
+                        default=10,
                        help='maximum number of epochs to train')
     parser.add_argument('--num_gpus',
                        type=int,
