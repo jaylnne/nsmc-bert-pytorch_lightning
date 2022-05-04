@@ -34,13 +34,14 @@ def main():
                        help='maximum length of input sequence data')
     parser.add_argument('--batch_size',
                        type=int,
+                       default=32,
                        help='batch size')
     args = parser.parse_args()
 
     seed_everything(args.seed, workers=True)
 
     dm = NSMCDataModule(
-        data_dir=args.data_path, 
+        data_path=args.data_path, 
         mode=args.mode, 
         valid_size=args.valid_size, 
         max_seq_len=args.max_seq_len, 
