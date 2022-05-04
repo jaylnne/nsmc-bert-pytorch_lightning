@@ -173,7 +173,7 @@ class NSMCDataModule(pl.LightningDataModule):
             wget.download('https://github.com/e9t/nsmc/raw/master/ratings_train.txt', out=self.data_path)
         if not os.path.isfile(f'{self.data_path}/ratings_test.txt'):
             wget.download('https://github.com/e9t/nsmc/raw/master/ratings_test.txt', out=self.data_path)
-        generate_preprocessed(self.data_path)
+            generate_preprocessed(self.data_path)
         
     def setup(self, stage):
         if stage in (None, 'fit'):
