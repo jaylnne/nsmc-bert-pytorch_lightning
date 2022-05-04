@@ -85,10 +85,6 @@ def main():
     )
     trainer.fit(model, dm)
     
-    # test
-    dm.setup('test')
-    trainer.test(ckpt_path='best')
-    
     
 if __name__ == '__main__':
     main()
