@@ -1,3 +1,4 @@
+import os
 import wget
 import torch
 import warnings
@@ -168,9 +169,9 @@ class NSMCDataModule(pl.LightningDataModule):
     def prepare_data(self):
         # download data
         # [TODO] 데이터가 로컬에 없는 경우에만 다운로드 실행
-        if os.path.isfile(f'{self.data_path}/ratings_train.txt'):
+        if not os.path.isfile(f'{self.data_path}/ratings_train.txt'):
             wget.download('https://github.com/e9t/nsmc/raw/master/ratings_train.txt', out=self.data_path)
-        if os.path.isfile(f'{self.data_path}/ratings_test.txt'):
+        if not os.path.isfile(f'{self.data_path}/ratings_test.txt'):
             wget.download('https://github.com/e9t/nsmc/raw/master/ratings_test.txt', out=self.data_path)
         generate_preprocessed(self.data_path)
         
