@@ -5,7 +5,6 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 from model import *
-from preprocessing import generate_preprocessed
 
 
 def main():
@@ -16,9 +15,11 @@ def main():
                        default=42)
     parser.add_argument('--data_path',
                         type=str,
+                        default='data',
                         help='where to prepare data')
     parser.add_argument('--max_epoch',
                        type=int,
+                        default=1,
                        help='maximum number of epochs to train')
     parser.add_argument('--num_gpus',
                        type=int,
@@ -30,6 +31,7 @@ def main():
                        choices=['clean', 'only_korean'])
     parser.add_argument('--save_path',
                        type=str,
+                       default='checkpoints',
                        help='where to save checkpoint files')
     parser.add_argument('--valid_size',
                        type=float,
@@ -41,20 +43,20 @@ def main():
                        help='maximum length of input sequence data')
     parser.add_argument('--batch_size',
                        type=int,
+                       default=64,
                        help='batch size')
     args = parser.parse_args()
 
     seed_everything(args.seed, workers=True)
 
     dm = NSMCDataModule(
-        data_dir=args.data_path, 
+        data_path=args.data_path, 
         mode=args.mode, 
         valid_size=args.valid_size, 
         max_seq_len=args.max_seq_len, 
         batch_size=args.batch_size,
     )
-    dm.prepare_data(args.data_path)
-    generate_preprocessed(args.data_path)
+    dm.prepare_data()
     dm.setup('fit')
 
     model = NSMCClassification()

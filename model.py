@@ -11,6 +11,8 @@ from kobert_tokenizer import KoBERTTokenizer
 from torch.utils.data import random_split, Dataset, DataLoader
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
+from preprocessing import generate_preprocessed
+
 
 class NSMCClassification(pl.LightningModule):
     
@@ -144,7 +146,6 @@ class NSMCDataset(Dataset):
         attention_mask = features['attention_mask'].squeeze(0)
         token_type_ids = features['token_type_ids'].squeeze(0)
         label = torch.tensor(data['label'])
-        # label = F.one_hot(label)
                         
         return {
             'input_ids': input_ids,
@@ -156,24 +157,30 @@ class NSMCDataset(Dataset):
     
 class NSMCDataModule(pl.LightningDataModule):
     
-    def __init__(self, data_dir, mode, valid_size, max_seq_len, batch_size):
-        self.full_data_path = f'{data_dir}/train_{mode}.csv'
-        self.test_data_path = f'{data_dir}/test_{mode}.csv'
+    def __init__(self, data_path, mode, valid_size, max_seq_len, batch_size):
+        self.data_path = data_path
+        self.full_data_path = f'{self.data_path}/train_{mode}.csv'
+        self.test_data_path = f'{self.data_path}/test_{mode}.csv'
         self.valid_size = valid_size
         self.max_seq_len = max_seq_len
         self.batch_size = batch_size
         
-    def prepare_data(self, data_path):
+    def prepare_data(self):
         # download data
-        wget.download('https://github.com/e9t/nsmc/raw/master/ratings_train.txt', out='data')
-        wget.download('https://github.com/e9t/nsmc/raw/master/ratings_test.txt', out='data')
+        # [TODO] 데이터가 로컬에 없는 경우에만 다운로드 실행
+        wget.download('https://github.com/e9t/nsmc/raw/master/ratings_train.txt', out=self.data_path)
+        wget.download('https://github.com/e9t/nsmc/raw/master/ratings_test.txt', out=self.data_path)
+        generate_preprocessed(self.data_path)
         
     def setup(self, stage):
-        full = NSMCDataset(self.full_data_path, self.max_seq_len)
-        train_size = int(len(full) * (1 - self.valid_size))
-        valid_size = len(full) - train_size
-        self.train, self.valid = random_split(full, [train_size, valid_size])
-        self.test = NSMCDataset(self.test_data_path, self.max_seq_len)
+        if stage in (None, 'fit'):
+            full = NSMCDataset(self.full_data_path, self.max_seq_len)
+            train_size = int(len(full) * (1 - self.valid_size))
+            valid_size = len(full) - train_size
+            self.train, self.valid = random_split(full, [train_size, valid_size])
+            
+        elif stage in (None, 'test'):
+            self.test = NSMCDataset(self.test_data_path, self.max_seq_len)
         
     def train_dataloader(self):
         return DataLoader(self.train, batch_size=self.batch_size, num_workers=5, shuffle=True, pin_memory=True)
