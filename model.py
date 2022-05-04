@@ -156,9 +156,9 @@ class NSMCDataset(Dataset):
     
 class NSMCDataModule(pl.LightningDataModule):
     
-    def __init__(self, data_dir, stem_analyzer, valid_size, max_seq_len, batch_size):
-        self.full_data_path = f'{data_dir}/train_{stem_analyzer}.csv'
-        self.test_data_path = f'{data_dir}/test_{stem_analyzer}.csv'
+    def __init__(self, data_dir, mode, valid_size, max_seq_len, batch_size):
+        self.full_data_path = f'{data_dir}/train_{mode}.csv'
+        self.test_data_path = f'{data_dir}/test_{mode}.csv'
         self.valid_size = valid_size
         self.max_seq_len = max_seq_len
         self.batch_size = batch_size

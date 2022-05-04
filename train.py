@@ -22,9 +22,10 @@ parser.add_argument('--num_gpus',
                    type=int,
                    default=-1,
                    help='number of available gpus')
-parser.add_argument('--stem_analyzer',
+parser.add_argument('--mode',
                    type=str,
-                   default='clean')
+                   default='clean',
+                   choices=['clean', 'only_korean'])
 parser.add_argument('--save_path',
                    type=str,
                    help='where to save checkpoint files')
@@ -43,19 +44,9 @@ args = parser.parse_args()
 
 seed_everything(args.seed, workers=True)
 
-DATA_PATH = 'data'
-
-EPOCH = 10
-AVAIL_GPUS = -1
-STEM_ANALYZER = 'clean'
-CKPT_SAVE_PATH = 'checkpoints'
-VALID_SIZE = 0.1
-MAX_SEQ_LEN = 64
-BATCH_SIZE = 32
-
 dm = NSMCDataModule(
     data_dir='./data', 
-    stem_analyzer=args.stem_analyzer, 
+    stem_analyzer=args.mode, 
     valid_size=args.valid_size, 
     max_seq_len=args.max_seq_len, 
     batch_size=args.batch_size,
