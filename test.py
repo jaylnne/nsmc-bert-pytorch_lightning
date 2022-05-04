@@ -31,6 +31,7 @@ def main():
                        help='size of validation file')
     parser.add_argument('--max_seq_len',
                        type=int,
+                       default=200,
                        help='maximum length of input sequence data')
     parser.add_argument('--batch_size',
                        type=int,
