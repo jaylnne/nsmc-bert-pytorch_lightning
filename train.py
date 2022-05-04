@@ -37,6 +37,7 @@ def main():
                        help='size of validation file')
     parser.add_argument('--max_seq_len',
                        type=int,
+                       default=200,
                        help='maximum length of input sequence data')
     parser.add_argument('--batch_size',
                        type=int,
@@ -46,8 +47,8 @@ def main():
     seed_everything(args.seed, workers=True)
 
     dm = NSMCDataModule(
-        data_dir='./data', 
-        stem_analyzer=args.mode, 
+        data_dir=args.data_path, 
+        mode=args.mode, 
         valid_size=args.valid_size, 
         max_seq_len=args.max_seq_len, 
         batch_size=args.batch_size,
@@ -81,7 +82,9 @@ def main():
         callbacks=[checkpoint_callback, early_stopping],
     )
     trainer.fit(model, dm)
-
+    
+    # test
+    dm.setup('test')
     trainer.test(ckpt_path='best')
     
     
