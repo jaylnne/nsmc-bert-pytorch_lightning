@@ -1,20 +1,35 @@
 # Naver sentiment movie corpus(NSMC) BERT Pytorch Lightning
 
-- generate data
-```shell
-[TODO]
-```
+[[POST] ⚡pytorch lightning 으로 koBERT Fine-tuning 하기 - NSMC](https://velog.io/@jaylnne/pytorch-lightning-%EC%9C%BC%EB%A1%9C-NSMC-BERT-Fine-tuning-%ED%95%98%EA%B8%B0)
 
-- train
+## Download pretrained model and tokenizer
 ```shell
-# train.py 에서 파라미터 원하는대로 수정 [TODO] 터미널 argument 로 입력할 수 있게끔 수정 예정
+$ python download_pretrained.py --save_path pretrained
+```
+- It will create `'./pretrained'` directory.
+- It will download kobert pretrained model and tokenizer files below `'./pretrained'` directory.
+
+## Train
+```shell
+# run example
 python train.py
 ```
+- arguments
+    - seed: random seed number
+    - data_path: where to prepare data
+    - max_epoch: maximum number of epochs to train
+    - num_gpus: number of available gpus (-1: all avauilable)
+    - mode: train only korean data or not
+    - save_path: where to save checkpoints files
+    - valid_size: size of validation file
+    - max_seq_len: number of available gpus
+    - batch_size: batch size
 
-- test
-    - 학습 완료 후 val_acc 가 가장 높았던 'best' 모델로 즉시 test 가 실행됩니다.
-    - best 가 아닌 체크포인트나 별도로 test 를 실행하고 싶을 경우 test.py 파일을 실행합니다.
+## Test
 ```shell
-# test.py 에서 파라미터 원하는대로 수정 [TODO] 터미널 argument 로 입력할 수 있게끔 수정 예정
-python test.py
+# run example
+python test.py --ckpt_path checkpoints/epoch=05-val_acc=0.897.ckpt
 ```
+- arguments
+    - ckpt_path: checkpoint file path which is execute test with
+    - The rest is same with train.py
