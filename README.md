@@ -1,6 +1,6 @@
 # Naver sentiment movie corpus(NSMC) BERT Pytorch Lightning
 
-[[POST] ⚡pytorch lightning 으로 koBERT Fine-tuning 하기 - NSMC](https://velog.io/@jaylnne/pytorch-lightning-%EC%9C%BC%EB%A1%9C-NSMC-BERT-Fine-tuning-%ED%95%98%EA%B8%B0)
+[[POST] ⚡pytorch lightning 으로 koBERT Fine-tuning 하기 - NSMC](https://velog.io/@jaylnne/Pytorch-Lightning-%EC%9C%BC%EB%A1%9C-koBERT-Fine-Tuning-%ED%95%B4%EB%B3%B4%EA%B8%B0-NSMC)
 
 ## Download pretrained model and tokenizer
 ```shell
