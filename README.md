@@ -33,3 +33,10 @@ python test.py --ckpt_path checkpoints/epoch=05-val_acc=0.897.ckpt
 - arguments
     - ckpt_path: checkpoint file path which is execute test with
     - The rest is same with train.py
+    
+## Export to onnx
+```shell
+# run example
+python export_to_onnx.py --ckpt_path checkpoints/epoch=05-val_acc=0.897.ckpt
+```
+- It will create `model.onnx`.
