@@ -35,7 +35,7 @@ class NSMCClassification(pl.LightningModule):
             token_type_ids=token_type_ids,
         )
         
-        h_cls = out['last_hidden_state'][:, -1]
+        h_cls = out['last_hidden_state'][:, 0]
         logits = self.W(h_cls)
         attn = out['attentions']
         
